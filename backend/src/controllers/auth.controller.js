@@ -73,5 +73,21 @@ async function logIn(req, res) {
       .json({ message: "internal server error", error: error.message });
   }
 }
-
-module.exports = { signUp, logIn };
+async function getMe(req,res){
+  try{
+    const user = req.user;
+    return res.status(200).json({
+      message: "User fetched successfully",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+      },
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "internal server error", error: error.message });
+  }
+}
+module.exports = { signUp, logIn, getMe };
