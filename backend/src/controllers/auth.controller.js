@@ -1,8 +1,9 @@
 const jwt = require("jsonwebtoken");
 const userModel = require("../models/user.model");
+const { jwtSecret } = require("../config/environments/config");
 
 async function generateToken(user) {
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+  const token = jwt.sign({ id: user._id }, jwtSecret, {
     expiresIn: "1d",
   });
   return token;
@@ -35,8 +36,42 @@ async function signUp(req, res) {
       token,
     });
   } catch (error) {
-    return res.status(500).json({ message: "internal server error" });
+    return res
+      .status(500)
+      .json({ message: "internal server error", error: error.message });
   }
 }
 
-module.exports = { signUp };
+async function logIn(req, res) {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+    const user = await userModel.findOne({ email });
+    if (!user || !(await user.checkPassword(password))) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+    const token = await generateToken(user);
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "Strict",
+    });
+    return res.status(200).json({
+      message: "User logged in successfully",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+      },
+      token,
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "internal server error", error: error.message });
+  }
+}
+
+module.exports = { signUp, logIn };
