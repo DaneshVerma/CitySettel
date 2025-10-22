@@ -11,15 +11,25 @@ async function generateToken(user) {
 
 async function signUp(req, res) {
   try {
-    const { name, email, password } = req.body;
-    if (!name || !email || !password) {
+    const {
+      fullName: { firstName, lastName },
+      email,
+      password,
+      phone,
+    } = req.body;
+    if (!firstName || !lastName || !email || !password || !phone) {
       return res.status(400).json({ message: "All fields are required" });
     }
     const existingUser = await userModel.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: "User already exists" });
     }
-    const newUser = await userModel.create({ name, email, password });
+    const newUser = await userModel.create({
+      fullName: { firstName, lastName },
+      email,
+      password,
+      phone,
+    });
     const token = await generateToken(newUser);
     res.cookie("token", token, {
       httpOnly: true,
@@ -30,7 +40,11 @@ async function signUp(req, res) {
       message: "User created successfully",
       user: {
         id: newUser._id,
-        name: newUser.name,
+        fullName: {
+          firstName: newUser.fullName.firstName,
+          lastName: newUser.fullName.lastName,
+        },
+        phone: newUser.phone,
         email: newUser.email,
       },
       token,
@@ -73,8 +87,8 @@ async function logIn(req, res) {
       .json({ message: "internal server error", error: error.message });
   }
 }
-async function getMe(req,res){
-  try{
+async function getMe(req, res) {
+  try {
     const user = req.user;
     return res.status(200).json({
       message: "User fetched successfully",
