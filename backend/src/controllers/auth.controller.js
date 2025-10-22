@@ -56,6 +56,49 @@ async function signUp(req, res) {
   }
 }
 
+async function googleCallback(req, res) {
+  const {
+    id,
+    emails: [{ value: email }],
+    name: { givenName: firstName, familyName: lastName },
+  } = req.user;
+  const isUserExist = await userModel.findOne({
+    $or: [{ email }, { googleId: id }],
+  });
+  if (isUserExist) {
+    const token = jwt.sign(
+      {
+        id: isUserExist._id,
+        fullname: isUserExist.fullname,
+      },
+      jwtSecret,
+      {
+        expiresIn: "2d",
+      }
+    );
+    res.cookie("token", token);
+    return res
+      .status(200)
+      .json({ message: "User logged in successfully", isUserExist, token });
+  }
+
+  const user = await userModel.create({
+    email,
+    fullName: {
+      firstName,
+      lastName,
+    },
+    googleId: id,
+  });
+  const token = jwt.sign({ id: user._id, fullName: user.fullName }, jwtSecret, {
+    expiresIn: "2d",
+  });
+  res.cookie("token", token);
+  return res
+    .status(200)
+    .json({ message: "User registered successfully", user, token });
+}
+
 async function logIn(req, res) {
   try {
     const { email, password } = req.body;
@@ -104,4 +147,4 @@ async function getMe(req, res) {
       .json({ message: "internal server error", error: error.message });
   }
 }
-module.exports = { signUp, logIn, getMe };
+module.exports = { signUp, logIn, getMe, googleCallback };
