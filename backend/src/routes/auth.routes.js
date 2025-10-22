@@ -1,6 +1,13 @@
 const router = require("express").Router();
 const passport = require("passport");
-const { signUp, logIn, getMe, continueWithGoogle, googleCallback } = require("../controllers/auth.controller");
+const {
+  signUp,
+  logIn,
+  getMe,
+  continueWithGoogle,
+  googleCallback,
+  logout,
+} = require("../controllers/auth.controller");
 const { authUser } = require("../middlewares/auth.Middleware");
 const { Strategy: GoogleStrategy } = require("passport-google-oauth20");
 const {
@@ -41,5 +48,7 @@ router.get(
   }),
   googleCallback
 );
+
+router.post("/logout", logout);
 
 module.exports = router;

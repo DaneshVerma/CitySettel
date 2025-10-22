@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 const userModel = require("../models/user.model");
-const { jwtSecret } = require("../config/environments/config");
+const { jwtSecret, nodeEnv } = require("../config/environments/config");
 
 async function generateToken(user) {
   const token = jwt.sign({ id: user._id }, jwtSecret, {
@@ -33,7 +33,7 @@ async function signUp(req, res) {
     const token = await generateToken(newUser);
     res.cookie("token", token, {
       httpOnly: true,
-      secure: true,
+      secure: nodeEnv === "production",
       sameSite: "Strict",
     });
     return res.status(201).json({
@@ -112,7 +112,7 @@ async function logIn(req, res) {
     const token = await generateToken(user);
     res.cookie("token", token, {
       httpOnly: true,
-      secure: true,
+      secure: nodeEnv === "production",
       sameSite: "Strict",
     });
     return res.status(200).json({
@@ -147,4 +147,9 @@ async function getMe(req, res) {
       .json({ message: "internal server error", error: error.message });
   }
 }
-module.exports = { signUp, logIn, getMe, googleCallback };
+
+async function logout(req, res) {
+  res.clearCookie("token");
+  return res.status(200).json({ message: "User logged out successfully" });
+}
+module.exports = { signUp, logIn, getMe, googleCallback, logout };
