@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { Toaster } from "./components/ui/sonner";
 import { SplashScreen } from "./components/SplashScreen";
 import { OnboardingScreens } from "./components/OnboardingScreens";
@@ -11,107 +12,144 @@ import { SavedScreen } from "./components/SavedScreen";
 import { ProfileScreen } from "./components/ProfileScreen";
 import { FiltersSheet } from "./components/FiltersSheet";
 import { BottomNavigation } from "./components/BottomNavigation";
+import { useAppNavigation } from "./hooks/useAppNavigation";
+import { ROUTES } from "./constants/routes";
 
 export default function App() {
-  const [currentScreen, setCurrentScreen] = useState("splash");
-  const [activeTab, setActiveTab] = useState("home");
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [comboData, setComboData] = useState(null);
+  const {
+    navigate,
+    location,
+    navigateToScreen,
+    navigateToTab,
+    getCurrentTab,
+    shouldShowBottomNav,
+  } = useAppNavigation();
 
   useEffect(() => {
-    // Simulate splash screen loading
-    const timer = setTimeout(() => {
-      setCurrentScreen("onboarding");
-    }, 2500);
-
-    return () => clearTimeout(timer);
-  }, []);
+    // Redirect to splash screen on initial load
+    if (location.pathname === ROUTES.ROOT) {
+      navigate(ROUTES.SPLASH);
+    }
+  }, [location.pathname, navigate]);
 
   const handleNavigate = (screen, data) => {
     if (screen === "combo") {
       setComboData(data);
-      setCurrentScreen("combo");
+      navigate(ROUTES.COMBO, { state: { comboData: data } });
     } else {
-      setCurrentScreen(screen);
-      if (["home", "explore", "saved", "profile"].includes(screen)) {
-        setActiveTab(screen);
-      }
+      navigateToScreen(screen);
     }
   };
 
   const handleTabChange = (tab) => {
-    setActiveTab(tab);
-    setCurrentScreen(tab);
+    navigateToTab(tab);
   };
 
   const handleOnboardingComplete = () => {
-    setCurrentScreen("login");
+    navigate(ROUTES.LOGIN);
   };
 
   const handleLogin = () => {
-    setCurrentScreen("home");
-    setActiveTab("home");
+    navigate(ROUTES.HOME);
   };
 
   const handleSignup = () => {
-    setCurrentScreen("home");
-    setActiveTab("home");
+    navigate(ROUTES.HOME);
   };
 
   const handleLogout = () => {
-    setCurrentScreen("login");
+    navigate(ROUTES.LOGIN);
   };
 
-  const showBottomNav = ["home", "explore", "saved", "profile"].includes(
-    currentScreen
-  );
+  const handleComboBack = () => {
+    // Navigate back to the previous main tab or home
+    const mainTabs = ["home", "explore", "saved", "profile"];
+    const currentPath = location.pathname;
+    const referrer = location.state?.from || "home";
+
+    if (mainTabs.includes(referrer)) {
+      navigate(`/${referrer}`);
+    } else {
+      navigate("/home");
+    }
+  };
 
   return (
     <div className='relative w-full mx-auto min-h-screen bg-[#F9FAFB] overflow-hidden'>
-      {currentScreen === "splash" && <SplashScreen />}
+      <Routes>
+        <Route path='/splash' element={<SplashScreen />} />
 
-      {currentScreen === "onboarding" && (
-        <OnboardingScreens onComplete={handleOnboardingComplete} />
-      )}
-
-      {currentScreen === "login" && (
-        <LoginScreen
-          onLogin={handleLogin}
-          onSwitchToSignup={() => setCurrentScreen("signup")}
+        <Route
+          path='/onboarding'
+          element={<OnboardingScreens onComplete={handleOnboardingComplete} />}
         />
-      )}
 
-      {currentScreen === "signup" && (
-        <SignupScreen
-          onSignup={handleSignup}
-          onSwitchToLogin={() => setCurrentScreen("login")}
+        <Route
+          path='/login'
+          element={
+            <LoginScreen
+              onLogin={handleLogin}
+              onSwitchToSignup={() => navigate("/signup")}
+            />
+          }
         />
-      )}
 
-      {currentScreen === "home" && <HomeScreen onNavigate={handleNavigate} />}
-
-      {currentScreen === "explore" && (
-        <ExploreScreen
-          onNavigate={handleNavigate}
-          onOpenFilters={() => setIsFiltersOpen(true)}
+        <Route
+          path='/signup'
+          element={
+            <SignupScreen
+              onSignup={handleSignup}
+              onSwitchToLogin={() => navigate("/login")}
+            />
+          }
         />
-      )}
 
-      {currentScreen === "combo" && (
-        <ComboDetailScreen
-          data={comboData}
-          onBack={() => {
-            setCurrentScreen(activeTab);
-          }}
+        <Route
+          path='/home'
+          element={<HomeScreen onNavigate={handleNavigate} />}
         />
-      )}
 
-      {currentScreen === "saved" && <SavedScreen onNavigate={handleNavigate} />}
+        <Route
+          path='/explore'
+          element={
+            <ExploreScreen
+              onNavigate={handleNavigate}
+              onOpenFilters={() => setIsFiltersOpen(true)}
+            />
+          }
+        />
 
-      {currentScreen === "profile" && <ProfileScreen onLogout={handleLogout} />}
+        <Route
+          path='/combo'
+          element={
+            <ComboDetailScreen
+              data={comboData || location.state?.comboData}
+              onBack={handleComboBack}
+            />
+          }
+        />
 
-      {showBottomNav && (
-        <BottomNavigation activeTab={activeTab} onTabChange={handleTabChange} />
+        <Route
+          path='/saved'
+          element={<SavedScreen onNavigate={handleNavigate} />}
+        />
+
+        <Route
+          path='/profile'
+          element={<ProfileScreen onLogout={handleLogout} />}
+        />
+
+        {/* Redirect root to splash */}
+        <Route path='/' element={<SplashScreen />} />
+      </Routes>
+
+      {shouldShowBottomNav() && (
+        <BottomNavigation
+          activeTab={getCurrentTab()}
+          onTabChange={handleTabChange}
+        />
       )}
 
       <FiltersSheet

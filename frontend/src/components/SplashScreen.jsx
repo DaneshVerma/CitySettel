@@ -1,7 +1,19 @@
 import { motion } from "motion/react";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Home } from "lucide-react";
 
 export function SplashScreen() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Simulate splash screen loading and navigate to onboarding
+    const timer = setTimeout(() => {
+      navigate("/onboarding");
+    }, 2500);
+
+    return () => clearTimeout(timer);
+  }, [navigate]);
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#2563EB] to-[#1E40AF] flex flex-col items-center justify-center px-6">
       <motion.div
