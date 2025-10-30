@@ -105,11 +105,12 @@ async function logIn(req, res) {
     if (!email || !password) {
       return res.status(400).json({ message: "All fields are required" });
     }
-    const user = await userModel.findOne({ email });
+    const user = await userModel.findOne({ email }).select("+password");
     if (!user || !(await user.checkPassword(password))) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
     const token = await generateToken(user);
+    
     res.cookie("token", token, {
       httpOnly: true,
       secure: nodeEnv === "production",

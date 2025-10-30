@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema(
     },
     phone: { type: String },
     email: { type: String, required: true, unique: true },
-    password: { type: String, select: false },
+    password: { type: String, required: true, select: false },
     googleId: {
       type: String,
       unique: true,
@@ -25,7 +25,7 @@ userSchema.pre("save", async function (next) {
   next();
 });
 userSchema.methods.checkPassword = async function (password) {
-  return await bcrypt.compare(password, this.password);
+  return bcrypt.compare(password, this.password);
 };
 
 module.exports = mongoose.model("User", userSchema);
