@@ -120,7 +120,11 @@ async function logIn(req, res) {
       message: "User logged in successfully",
       user: {
         id: user._id,
-        name: user.name,
+        fullName: {
+          firstName: user.fullName.firstName,
+          lastName: user.fullName.lastName,
+        },
+        phone: user.phone,
         email: user.email,
       },
       token,
@@ -138,7 +142,11 @@ async function getMe(req, res) {
       message: "User fetched successfully",
       user: {
         id: user._id,
-        name: user.name,
+        fullName: {
+          firstName: user.fullName.firstName,
+          lastName: user.fullName.lastName,
+        },
+        phone: user.phone,
         email: user.email,
       },
     });

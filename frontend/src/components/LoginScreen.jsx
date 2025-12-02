@@ -2,14 +2,32 @@ import { useState } from "react";
 import { Mail, Lock, Home } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
+import { useAuth } from "../contexts/AuthContext";
+import { toast } from "sonner";
 
 export function LoginScreen({ onLogin, onSwitchToSignup }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    onLogin();
+    setLoading(true);
+    
+    try {
+      const result = await login({ email, password });
+      if (result.success) {
+        toast.success("Login successful!");
+        onLogin();
+      } else {
+        toast.error(result.error || "Login failed");
+      }
+    } catch (error) {
+      toast.error("An error occurred during login");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -67,9 +85,10 @@ export function LoginScreen({ onLogin, onSwitchToSignup }) {
         <div className="space-y-3 mt-auto">
           <Button
             type="submit"
+            disabled={loading}
             className="w-full bg-[#2563EB] hover:bg-[#1E40AF] text-white rounded-xl h-12"
           >
-            Login
+            {loading ? "Logging in..." : "Login"}
           </Button>
 
           <Button

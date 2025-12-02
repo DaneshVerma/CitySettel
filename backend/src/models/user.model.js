@@ -9,12 +9,14 @@ const userSchema = new mongoose.Schema(
     },
     phone: { type: String },
     email: { type: String, required: true, unique: true },
-    password: { type: String, required: true, select: false },
+    password: { type: String, select: false },
     googleId: {
       type: String,
       unique: true,
       sparse: true,
     },
+    city: { type: String },
+    savedItems: [{ type: mongoose.Schema.Types.ObjectId, ref: "Listing" }],
   },
   { timestamps: true }
 );
