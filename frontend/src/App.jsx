@@ -18,6 +18,7 @@ import { ROUTES } from "./constants/routes";
 export default function App() {
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [comboData, setComboData] = useState(null);
+  const [exploreFiltersCallback, setExploreFiltersCallback] = useState(null);
   const {
     navigate,
     location,
@@ -38,6 +39,9 @@ export default function App() {
     if (screen === "combo") {
       setComboData(data);
       navigate(ROUTES.COMBO, { state: { comboData: data } });
+    } else if (screen === "explore") {
+      // Pass category or search data to explore screen
+      navigate(ROUTES.EXPLORE, { state: data });
     } else {
       navigateToScreen(screen);
     }
@@ -117,6 +121,9 @@ export default function App() {
             <ExploreScreen
               onNavigate={handleNavigate}
               onOpenFilters={() => setIsFiltersOpen(true)}
+              onSetFilterCallback={(callback) =>
+                setExploreFiltersCallback(() => callback)
+              }
             />
           }
         />
@@ -155,6 +162,10 @@ export default function App() {
       <FiltersSheet
         isOpen={isFiltersOpen}
         onClose={() => setIsFiltersOpen(false)}
+        onApplyFilters={(filters) => {
+          exploreFiltersCallback?.(filters);
+          setIsFiltersOpen(false);
+        }}
       />
 
       <Toaster />

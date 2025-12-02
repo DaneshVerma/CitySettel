@@ -1,5 +1,13 @@
 import { useState, useEffect } from "react";
-import { Search, SlidersHorizontal, MapPin, Star, Heart } from "lucide-react";
+import { useLocation } from "react-router-dom";
+import {
+  Search,
+  SlidersHorizontal,
+  MapPin,
+  Star,
+  Heart,
+  ChevronDown,
+} from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { Button } from "./ui/button";
 import { listingAPI } from "../api/listing";
@@ -8,19 +16,47 @@ import { toast } from "sonner";
 
 const filterChips = ["Budget", "Distance", "Ratings", "Category"];
 
-export function ExploreScreen({ onNavigate, onOpenFilters }) {
+export function ExploreScreen({
+  onNavigate,
+  onOpenFilters,
+  onSetFilterCallback,
+}) {
   const [activeChip, setActiveChip] = useState(null);
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
+  const [showSortMenu, setShowSortMenu] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
-    fetchListings();
-  }, []);
+    // Check if there's navigation state with category or search
+    const navState = location.state;
+    const params = {};
+
+    if (navState?.category) {
+      params.type = navState.category;
+    }
+    if (navState?.search) {
+      setSearchQuery(navState.search);
+      params.search = navState.search;
+    }
+
+    fetchListings(params);
+
+    // Set filter callback for parent component
+    if (onSetFilterCallback) {
+      onSetFilterCallback(handleApplyFilters);
+    }
+  }, [location.state]);
 
   const fetchListings = async (params = {}) => {
     try {
       setLoading(true);
+      // Add sort parameter
+      if (sortBy !== "newest") {
+        params.sortBy = sortBy;
+      }
       const data = await listingAPI.getListings(params);
       setListings(data.listings || []);
     } catch (error) {
@@ -83,6 +119,30 @@ export function ExploreScreen({ onNavigate, onOpenFilters }) {
     }
     fetchListings(params);
   };
+
+  const handleSort = (sortOption) => {
+    setSortBy(sortOption);
+    setShowSortMenu(false);
+    fetchListings({ sortBy: sortOption });
+  };
+
+  const sortOptions = [
+    { value: "newest", label: "Newest" },
+    { value: "price-asc", label: "Price: Low to High" },
+    { value: "price-desc", label: "Price: High to Low" },
+    { value: "rating", label: "Highest Rated" },
+  ];
+
+  // Close sort menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (showSortMenu && !e.target.closest(".sort-dropdown")) {
+        setShowSortMenu(false);
+      }
+    };
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [showSortMenu]);
 
   return (
     <div className='min-h-screen bg-[#F9FAFB] pb-20'>
@@ -152,7 +212,32 @@ export function ExploreScreen({ onNavigate, onOpenFilters }) {
       <div className='px-6 mt-6'>
         <div className='flex items-center justify-between mb-4'>
           <h2 className='text-[#111827]'>{listings.length} Results</h2>
-          <button className='text-[#6B7280] text-sm'>Sort by</button>
+          <div className='relative sort-dropdown'>
+            <button
+              onClick={() => setShowSortMenu(!showSortMenu)}
+              className='flex items-center gap-1 text-[#6B7280] text-sm hover:text-[#2563EB]'
+            >
+              Sort by
+              <ChevronDown className='w-4 h-4' />
+            </button>
+            {showSortMenu && (
+              <div className='absolute right-0 top-full mt-2 bg-white rounded-lg shadow-lg border border-[#E5E7EB] py-2 min-w-[180px] z-20'>
+                {sortOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => handleSort(option.value)}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-[#F3F4F6] ${
+                      sortBy === option.value
+                        ? "text-[#2563EB] bg-[#F3F4F6]"
+                        : "text-[#111827]"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className='space-y-4'>

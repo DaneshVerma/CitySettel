@@ -13,6 +13,12 @@ export const comboAPI = {
     return response.data;
   },
 
+  // Alias for getCombo
+  getComboById: async (id) => {
+    const response = await api.get(`/combos/${id}`);
+    return response.data.combo;
+  },
+
   // Create combo
   createCombo: async (comboData) => {
     const response = await api.post("/combos", comboData);

@@ -9,7 +9,9 @@ import {
 } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { comboAPI } from "../api/combo";
+import { userAPI } from "../api/user";
 import { useAuth } from "../contexts/AuthContext";
+import { toast } from "sonner";
 
 const categories = [
   { id: "accommodation", icon: Home, label: "Accommodation", color: "#2563EB" },
@@ -21,11 +23,24 @@ const categories = [
 export function HomeScreen({ onNavigate }) {
   const [combos, setCombos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [savedCombos, setSavedCombos] = useState(new Set());
+  const [searchQuery, setSearchQuery] = useState("");
   const { user } = useAuth();
 
   useEffect(() => {
     fetchCombos();
+    fetchSavedCombos();
   }, []);
+
+  const fetchSavedCombos = async () => {
+    try {
+      const data = await userAPI.getSavedListings();
+      const savedIds = new Set(data.savedItems?.map((item) => item._id) || []);
+      setSavedCombos(savedIds);
+    } catch (error) {
+      console.error("Error fetching saved combos:", error);
+    }
+  };
 
   const fetchCombos = async () => {
     try {
@@ -66,6 +81,33 @@ export function HomeScreen({ onNavigate }) {
       setLoading(false);
     }
   };
+
+  const handleSaveCombo = async (e, comboId) => {
+    e.stopPropagation();
+    try {
+      if (savedCombos.has(comboId)) {
+        await userAPI.unsaveListing(comboId);
+        setSavedCombos((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(comboId);
+          return newSet;
+        });
+        toast.success("Removed from saved");
+      } else {
+        await userAPI.saveListing(comboId);
+        setSavedCombos((prev) => new Set(prev).add(comboId));
+        toast.success("Saved successfully!");
+      }
+    } catch (error) {
+      toast.error("Failed to update saved items");
+    }
+  };
+
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      onNavigate("explore", { search: searchQuery });
+    }
+  };
   return (
     <div className='min-h-screen bg-[#F9FAFB] pb-20'>
       {/* Header */}
@@ -90,6 +132,9 @@ export function HomeScreen({ onNavigate }) {
           <input
             type='text'
             placeholder='Search city, area, or service...'
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyPress={(e) => e.key === "Enter" && handleSearch()}
             className='w-full pl-12 pr-4 h-12 rounded-xl bg-[#F3F4F6] border border-transparent focus:border-[#2563EB] focus:bg-white focus:outline-none transition-all'
           />
         </div>
@@ -124,7 +169,12 @@ export function HomeScreen({ onNavigate }) {
       <div className='mt-8'>
         <div className='px-6 flex items-center justify-between mb-4'>
           <h2 className='text-[#111827]'>Smart Combos for You</h2>
-          <button className='text-[#2563EB]'>See all</button>
+          <button
+            onClick={() => onNavigate("explore")}
+            className='text-[#2563EB]'
+          >
+            See all
+          </button>
         </div>
 
         <div className='flex gap-4 px-6 overflow-x-auto pb-2 scrollbar-hide'>
@@ -151,12 +201,16 @@ export function HomeScreen({ onNavigate }) {
                     </div>
                   )}
                   <div
-                    onClick={(e) => {
-                      e.stopPropagation();
-                    }}
+                    onClick={(e) => handleSaveCombo(e, combo._id || combo.id)}
                     className='absolute top-3 right-3 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md cursor-pointer'
                   >
-                    <Heart className='w-4 h-4 text-[#6B7280]' />
+                    <Heart
+                      className={`w-4 h-4 ${
+                        savedCombos.has(combo._id || combo.id)
+                          ? "fill-[#EF4444] text-[#EF4444]"
+                          : "text-[#6B7280]"
+                      }`}
+                    />
                   </div>
                 </div>
 
@@ -190,7 +244,10 @@ export function HomeScreen({ onNavigate }) {
           <p className='text-blue-100 text-sm mb-4'>
             Bundle your stay, food, and fitness for maximum savings!
           </p>
-          <button className='bg-white text-[#2563EB] px-6 py-2 rounded-lg hover:bg-blue-50 transition-colors'>
+          <button
+            onClick={() => onNavigate("explore")}
+            className='bg-white text-[#2563EB] px-6 py-2 rounded-lg hover:bg-blue-50 transition-colors'
+          >
             Explore Combos
           </button>
         </div>

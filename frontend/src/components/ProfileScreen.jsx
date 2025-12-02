@@ -13,6 +13,11 @@ import { Button } from "./ui/button";
 import { useAuth } from "../contexts/AuthContext";
 import { userAPI } from "../api/user";
 import { toast } from "sonner";
+import { EditProfileModal } from "./EditProfileModal";
+import { SettingsScreen } from "./SettingsScreen";
+import { NotificationsScreen } from "./NotificationsScreen";
+import { HelpScreen } from "./HelpScreen";
+import { PrivacyScreen } from "./PrivacyScreen";
 
 const menuItems = [
   { icon: User, label: "Edit Profile", action: "edit-profile" },
@@ -26,6 +31,8 @@ const menuItems = [
 export function ProfileScreen({ onLogout }) {
   const { user, logout } = useAuth();
   const [savedCount, setSavedCount] = useState(0);
+  const [activeScreen, setActiveScreen] = useState(null);
+  const [showEditProfile, setShowEditProfile] = useState(false);
 
   useEffect(() => {
     fetchSavedCount();
@@ -49,6 +56,47 @@ export function ProfileScreen({ onLogout }) {
       toast.error("Logout failed");
     }
   };
+
+  const handleMenuItemClick = (action) => {
+    switch (action) {
+      case "edit-profile":
+        setShowEditProfile(true);
+        break;
+      case "my-listings":
+        toast.info(
+          "My Listings - Coming soon! This will show all your posted listings."
+        );
+        break;
+      case "notifications":
+        setActiveScreen("notifications");
+        break;
+      case "settings":
+        setActiveScreen("settings");
+        break;
+      case "privacy":
+        setActiveScreen("privacy");
+        break;
+      case "help":
+        setActiveScreen("help");
+        break;
+      default:
+        break;
+    }
+  };
+
+  // Show active screen if set
+  if (activeScreen === "settings") {
+    return <SettingsScreen onBack={() => setActiveScreen(null)} />;
+  }
+  if (activeScreen === "notifications") {
+    return <NotificationsScreen onBack={() => setActiveScreen(null)} />;
+  }
+  if (activeScreen === "help") {
+    return <HelpScreen onBack={() => setActiveScreen(null)} />;
+  }
+  if (activeScreen === "privacy") {
+    return <PrivacyScreen onBack={() => setActiveScreen(null)} />;
+  }
   return (
     <div className='min-h-screen bg-[#F9FAFB] pb-20'>
       {/* Header with User Info */}
@@ -71,7 +119,10 @@ export function ProfileScreen({ onLogout }) {
             <p className='text-blue-100 text-sm mb-4'>📍 {user.city}</p>
           )}
 
-          <button className='bg-white/20 backdrop-blur-sm text-white px-6 py-2 rounded-full hover:bg-white/30 transition-colors'>
+          <button
+            onClick={() => setShowEditProfile(true)}
+            className='bg-white/20 backdrop-blur-sm text-white px-6 py-2 rounded-full hover:bg-white/30 transition-colors'
+          >
             View Profile
           </button>
         </div>
@@ -99,6 +150,7 @@ export function ProfileScreen({ onLogout }) {
             return (
               <button
                 key={item.action}
+                onClick={() => handleMenuItemClick(item.action)}
                 className={`w-full flex items-center justify-between px-4 py-4 hover:bg-[#F9FAFB] transition-colors ${
                   index !== menuItems.length - 1
                     ? "border-b border-[#F3F4F6]"
@@ -141,6 +193,12 @@ export function ProfileScreen({ onLogout }) {
       <div className='text-center mt-8 px-6'>
         <p className='text-sm text-[#9CA3AF]'>CitySettle v1.0.0</p>
       </div>
+
+      {/* Edit Profile Modal */}
+      <EditProfileModal
+        isOpen={showEditProfile}
+        onClose={() => setShowEditProfile(false)}
+      />
     </div>
   );
 }
