@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import {
   ChevronRight,
   User,
@@ -10,6 +10,7 @@ import {
   Shield,
   Building2,
   Plus,
+  LayoutDashboard,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { useAuth } from "../contexts/AuthContext";
@@ -23,7 +24,29 @@ import { PrivacyScreen } from "./PrivacyScreen";
 import { VendorDashboard } from "./VendorDashboard";
 import { AddListingScreen } from "./AddListingScreen";
 
+// Lazy load admin dashboard
+const AdminDashboard = lazy(() =>
+  import("./AdminDashboard").then((module) => ({
+    default: module.AdminDashboard,
+  }))
+);
+
 const getMenuItems = (userRole) => {
+  if (userRole === "admin") {
+    return [
+      { icon: User, label: "Edit Profile", action: "edit-profile" },
+      {
+        icon: LayoutDashboard,
+        label: "Admin Dashboard",
+        action: "admin-dashboard",
+      },
+      { icon: Bell, label: "Notifications", action: "notifications" },
+      { icon: Settings, label: "Settings", action: "settings" },
+      { icon: Shield, label: "Privacy Policy", action: "privacy" },
+      { icon: HelpCircle, label: "Help & Support", action: "help" },
+    ];
+  }
+
   const commonItems = [
     { icon: User, label: "Edit Profile", action: "edit-profile" },
     { icon: Bell, label: "Notifications", action: "notifications" },
@@ -90,6 +113,9 @@ export function ProfileScreen({ onLogout }) {
       case "add-listing":
         setActiveScreen("add-listing");
         break;
+      case "admin-dashboard":
+        setActiveScreen("admin-dashboard");
+        break;
       case "notifications":
         setActiveScreen("notifications");
         break;
@@ -134,6 +160,22 @@ export function ProfileScreen({ onLogout }) {
         onBack={() => setActiveScreen("my-listings")}
         onSuccess={() => setActiveScreen("my-listings")}
       />
+    );
+  }
+  if (activeScreen === "admin-dashboard") {
+    return (
+      <Suspense
+        fallback={
+          <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
+            <div className="text-center">
+              <div className="w-16 h-16 border-4 border-[#2563EB] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+              <p className="text-[#6B7280]">Loading Admin Dashboard...</p>
+            </div>
+          </div>
+        }
+      >
+        <AdminDashboard onBack={() => setActiveScreen(null)} />
+      </Suspense>
     );
   }
   return (

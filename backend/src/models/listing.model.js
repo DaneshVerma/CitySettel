@@ -10,7 +10,13 @@ const listingSchema = new mongoose.Schema(
     },
     description: { type: String, required: true },
     price: { type: Number, required: true },
-    images: [{ type: String }],
+    images: [
+      {
+        url: { type: String },
+        fileId: { type: String },
+        thumbnailUrl: { type: String },
+      },
+    ],
     location: {
       address: { type: String, required: true },
       city: { type: String, required: true },
@@ -60,6 +66,16 @@ const listingSchema = new mongoose.Schema(
       category: { type: String },
       serviceType: { type: String },
     },
+    rejectionReason: { type: String },
+    pricePeriod: {
+      type: String,
+      enum: ["day", "week", "month", "year"],
+      default: "month",
+    },
+    address: { type: String },
+    city: { type: String },
+    contactPhone: { type: String },
+    contactEmail: { type: String },
   },
   { timestamps: true }
 );

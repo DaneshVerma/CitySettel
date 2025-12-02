@@ -4,13 +4,13 @@ import {
   Building2,
   MapPin,
   DollarSign,
-  Image as ImageIcon,
   FileText,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { toast } from "sonner";
 import api from "../api/axios";
+import { ImageUploader } from "./ImageUploader";
 
 export function AddListingScreen({ onBack, onSuccess }) {
   const [formData, setFormData] = useState({
@@ -297,18 +297,15 @@ export function AddListingScreen({ onBack, onSuccess }) {
           </div>
         </div>
 
-        {/* Images Info */}
-        <div className='bg-[#EFF6FF] rounded-xl p-4'>
-          <div className='flex gap-3'>
-            <ImageIcon className='w-5 h-5 text-[#2563EB] flex-shrink-0 mt-0.5' />
-            <div>
-              <h3 className='font-medium text-[#111827] mb-1'>Image Upload</h3>
-              <p className='text-sm text-[#6B7280]'>
-                Image upload feature will be available soon. For now, your
-                listing will be created without images.
-              </p>
-            </div>
-          </div>
+        {/* Images */}
+        <div className='bg-white rounded-xl p-4'>
+          <ImageUploader
+            images={formData.images}
+            onImagesChange={(images) =>
+              setFormData((prev) => ({ ...prev, images }))
+            }
+            maxImages={10}
+          />
         </div>
 
         {/* Submit Button */}
