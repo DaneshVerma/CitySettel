@@ -150,14 +150,14 @@ export function HomeScreen({ onNavigate }) {
                       {combo.badge}
                     </div>
                   )}
-                  <button
+                  <div
                     onClick={(e) => {
                       e.stopPropagation();
                     }}
-                    className='absolute top-3 right-3 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md'
+                    className='absolute top-3 right-3 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md cursor-pointer'
                   >
                     <Heart className='w-4 h-4 text-[#6B7280]' />
-                  </button>
+                  </div>
                 </div>
 
                 <div className='p-4'>
