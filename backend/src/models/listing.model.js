@@ -24,10 +24,20 @@ const listingSchema = new mongoose.Schema(
     reviewCount: { type: Number, default: 0 },
     amenities: [{ type: String }],
     availability: { type: Boolean, default: true },
+    vendor: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
     owner: {
       name: { type: String },
       phone: { type: String },
       email: { type: String },
+    },
+    approvalStatus: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
     },
     // Type-specific fields
     accommodationDetails: {

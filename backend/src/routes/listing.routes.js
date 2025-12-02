@@ -5,13 +5,16 @@ const {
   createListing,
   updateListing,
   deleteListing,
+  getVendorListings,
 } = require("../controllers/listing.controller");
 const { authUser } = require("../middlewares/auth.Middleware");
+const { isVendor } = require("../middlewares/vendor.Middleware");
 
 router.get("/", getListings);
+router.get("/vendor/my-listings", authUser, isVendor, getVendorListings);
 router.get("/:id", getListing);
-router.post("/", authUser, createListing);
-router.put("/:id", authUser, updateListing);
-router.delete("/:id", authUser, deleteListing);
+router.post("/", authUser, isVendor, createListing);
+router.put("/:id", authUser, isVendor, updateListing);
+router.delete("/:id", authUser, isVendor, deleteListing);
 
 module.exports = router;

@@ -16,6 +16,11 @@ async function signUp(req, res) {
       email,
       password,
       phone,
+      role,
+      businessName,
+      businessType,
+      businessAddress,
+      businessDescription,
     } = req.body;
     if (!firstName || !lastName || !email || !password || !phone) {
       return res.status(400).json({ message: "All fields are required" });
@@ -24,12 +29,24 @@ async function signUp(req, res) {
     if (existingUser) {
       return res.status(400).json({ message: "User already exists" });
     }
-    const newUser = await userModel.create({
+    const userData = {
       fullName: { firstName, lastName },
       email,
       password,
       phone,
-    });
+      role: role || "consumer",
+    };
+
+    // Add vendor-specific fields if role is vendor
+    if (role === "vendor") {
+      userData.businessName = businessName;
+      userData.businessType = businessType;
+      userData.businessAddress = businessAddress;
+      userData.businessDescription = businessDescription;
+      userData.verificationStatus = "pending";
+    }
+
+    const newUser = await userModel.create(userData);
     const token = await generateToken(newUser);
     res.cookie("token", token, {
       httpOnly: true,
@@ -46,6 +63,10 @@ async function signUp(req, res) {
         },
         phone: newUser.phone,
         email: newUser.email,
+        role: newUser.role,
+        businessName: newUser.businessName,
+        businessType: newUser.businessType,
+        verificationStatus: newUser.verificationStatus,
       },
       token,
     });
@@ -110,7 +131,7 @@ async function logIn(req, res) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
     const token = await generateToken(user);
-    
+
     res.cookie("token", token, {
       httpOnly: true,
       secure: nodeEnv === "production",

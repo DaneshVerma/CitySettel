@@ -8,6 +8,8 @@ import {
   Settings,
   Bell,
   Shield,
+  Building2,
+  Plus,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { useAuth } from "../contexts/AuthContext";
@@ -18,25 +20,45 @@ import { SettingsScreen } from "./SettingsScreen";
 import { NotificationsScreen } from "./NotificationsScreen";
 import { HelpScreen } from "./HelpScreen";
 import { PrivacyScreen } from "./PrivacyScreen";
+import { VendorDashboard } from "./VendorDashboard";
+import { AddListingScreen } from "./AddListingScreen";
 
-const menuItems = [
-  { icon: User, label: "Edit Profile", action: "edit-profile" },
-  { icon: FileText, label: "My Listings", action: "my-listings" },
-  { icon: Bell, label: "Notifications", action: "notifications" },
-  { icon: Settings, label: "Settings", action: "settings" },
-  { icon: Shield, label: "Privacy Policy", action: "privacy" },
-  { icon: HelpCircle, label: "Help & Support", action: "help" },
-];
+const getMenuItems = (userRole) => {
+  const commonItems = [
+    { icon: User, label: "Edit Profile", action: "edit-profile" },
+    { icon: Bell, label: "Notifications", action: "notifications" },
+    { icon: Settings, label: "Settings", action: "settings" },
+    { icon: Shield, label: "Privacy Policy", action: "privacy" },
+    { icon: HelpCircle, label: "Help & Support", action: "help" },
+  ];
+
+  if (userRole === "vendor") {
+    return [
+      { icon: User, label: "Edit Profile", action: "edit-profile" },
+      { icon: Building2, label: "My Listings", action: "my-listings" },
+      { icon: Plus, label: "Add Listing", action: "add-listing" },
+      { icon: Bell, label: "Notifications", action: "notifications" },
+      { icon: Settings, label: "Settings", action: "settings" },
+      { icon: Shield, label: "Privacy Policy", action: "privacy" },
+      { icon: HelpCircle, label: "Help & Support", action: "help" },
+    ];
+  }
+
+  return commonItems;
+};
 
 export function ProfileScreen({ onLogout }) {
   const { user, logout } = useAuth();
   const [savedCount, setSavedCount] = useState(0);
   const [activeScreen, setActiveScreen] = useState(null);
   const [showEditProfile, setShowEditProfile] = useState(false);
+  const menuItems = getMenuItems(user?.role);
 
   useEffect(() => {
-    fetchSavedCount();
-  }, []);
+    if (user?.role !== "vendor") {
+      fetchSavedCount();
+    }
+  }, [user?.role]);
 
   const fetchSavedCount = async () => {
     try {
@@ -63,9 +85,10 @@ export function ProfileScreen({ onLogout }) {
         setShowEditProfile(true);
         break;
       case "my-listings":
-        toast.info(
-          "My Listings - Coming soon! This will show all your posted listings."
-        );
+        setActiveScreen("my-listings");
+        break;
+      case "add-listing":
+        setActiveScreen("add-listing");
         break;
       case "notifications":
         setActiveScreen("notifications");
@@ -96,6 +119,22 @@ export function ProfileScreen({ onLogout }) {
   }
   if (activeScreen === "privacy") {
     return <PrivacyScreen onBack={() => setActiveScreen(null)} />;
+  }
+  if (activeScreen === "my-listings") {
+    return (
+      <VendorDashboard
+        onBack={() => setActiveScreen(null)}
+        onAddListing={() => setActiveScreen("add-listing")}
+      />
+    );
+  }
+  if (activeScreen === "add-listing") {
+    return (
+      <AddListingScreen
+        onBack={() => setActiveScreen("my-listings")}
+        onSuccess={() => setActiveScreen("my-listings")}
+      />
+    );
   }
   return (
     <div className='min-h-screen bg-[#F9FAFB] pb-20'>
@@ -130,16 +169,45 @@ export function ProfileScreen({ onLogout }) {
 
       {/* Stats Cards */}
       <div className='px-6 -mt-6 mb-6'>
-        <div className='grid grid-cols-2 gap-3'>
+        {user?.role === "vendor" ? (
           <div className='bg-white rounded-xl p-4 shadow-sm'>
-            <p className='text-2xl text-[#2563EB] mb-1'>0</p>
-            <p className='text-sm text-[#6B7280]'>Active Bookings</p>
+            <div className='flex items-center justify-between mb-2'>
+              <p className='text-sm text-[#6B7280]'>Business</p>
+              <span
+                className={`text-xs px-2 py-1 rounded-full ${
+                  user?.verificationStatus === "verified"
+                    ? "bg-green-100 text-green-800"
+                    : user?.verificationStatus === "rejected"
+                    ? "bg-red-100 text-red-800"
+                    : "bg-yellow-100 text-yellow-800"
+                }`}
+              >
+                {user?.verificationStatus === "verified"
+                  ? "Verified"
+                  : user?.verificationStatus === "rejected"
+                  ? "Rejected"
+                  : "Pending Verification"}
+              </span>
+            </div>
+            <p className='text-lg text-[#111827] font-semibold mb-1'>
+              {user?.businessName || "Business Name"}
+            </p>
+            <p className='text-sm text-[#6B7280] capitalize'>
+              {user?.businessType || "Business Type"}
+            </p>
           </div>
-          <div className='bg-white rounded-xl p-4 shadow-sm'>
-            <p className='text-2xl text-[#16A34A] mb-1'>{savedCount}</p>
-            <p className='text-sm text-[#6B7280]'>Saved Items</p>
+        ) : (
+          <div className='grid grid-cols-2 gap-3'>
+            <div className='bg-white rounded-xl p-4 shadow-sm'>
+              <p className='text-2xl text-[#2563EB] mb-1'>0</p>
+              <p className='text-sm text-[#6B7280]'>Active Bookings</p>
+            </div>
+            <div className='bg-white rounded-xl p-4 shadow-sm'>
+              <p className='text-2xl text-[#16A34A] mb-1'>{savedCount}</p>
+              <p className='text-sm text-[#6B7280]'>Saved Items</p>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Menu Items */}

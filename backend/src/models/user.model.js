@@ -15,8 +15,28 @@ const userSchema = new mongoose.Schema(
       unique: true,
       sparse: true,
     },
+    role: {
+      type: String,
+      enum: ["consumer", "vendor"],
+      default: "consumer",
+      required: true,
+    },
     city: { type: String },
     savedItems: [{ type: mongoose.Schema.Types.ObjectId, ref: "Listing" }],
+    // Vendor-specific fields
+    businessName: { type: String },
+    businessType: {
+      type: String,
+      enum: ["accommodation", "food", "gym", "essentials"],
+    },
+    businessAddress: { type: String },
+    businessDescription: { type: String },
+    verificationStatus: {
+      type: String,
+      enum: ["pending", "verified", "rejected"],
+      default: "pending",
+    },
+    listings: [{ type: mongoose.Schema.Types.ObjectId, ref: "Listing" }],
   },
   { timestamps: true }
 );
